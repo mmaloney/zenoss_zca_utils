@@ -51,6 +51,9 @@ if [ `rpm -qa | grep -c -i epel` -eq 0 ]; then
 	try rpm -ivh $epel_rpm_file
 fi
 
+try yum -y update
+try yum -y install git
+
 # Defaults for user provided input
 # ftp mirror for MySQL to use for version auto-detection:
 #mysql_ftp_mirror="ftp://mirror.anl.gov/pub/mysql/Downloads/MySQL-5.5/"
@@ -182,11 +185,11 @@ services="rabbitmq-server memcached snmpd"
 #			try rpm -ivh $file
 #		fi
 #	done
-	services="$services mysql"
-	echo "Configuring MySQL"
-	try /sbin/service mysql restart
-	try /usr/bin/mysqladmin -u root password ''
-	try /usr/bin/mysqladmin -u root -h localhost password ''
+#	services="$services mysql"
+#	echo "Configuring MySQL"
+#	try /sbin/service mysql restart
+#	try /usr/bin/mysqladmin -u root password ''
+#	try /usr/bin/mysqladmin -u root -h localhost password ''
 #fi
 
 #echo "Installing Zenoss Dependency Repo"
