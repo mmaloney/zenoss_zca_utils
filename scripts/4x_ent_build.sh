@@ -153,18 +153,17 @@ elif [ "$elv" == "6" ]; then
 fi
 
 echo "Downloading Files"
-if [ `rpm -qa | grep -c -i jre` -eq 0 ]; then
+if [ `rpm -qa | grep -c -i ^jre` -eq 0 ]; then
 	if [ ! -f $jre_file ];then
 		echo "Downloading Oracle JRE"
 		try wget -N -O $jre_file $jre_url
 		try chmod +x $jre_file
 	fi
-	if [ `rpm -qa | grep -c jre` -eq 0 ]; then
-		echo "Installating JRE"
-		try ./$jre_file
-	fi
+	echo "Installating JRE"
+	try ./$jre_file
 else
-	echo "Appears you already have a JRE installed. I'm not going to install another one"
+	echo "Appears you already have a JRE installed. Exiting."
+	exit 1
 fi
 
 services="rabbitmq-server memcached snmpd"
