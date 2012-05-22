@@ -2,7 +2,7 @@
 ####################################################
 #
 # A silly little script to make installing a 
-# Zenoss Core 4.x alpha development/testing machine
+# Zenoss Core 4.x beta development/testing machine
 # to save me a little time next time a new release is cut
 # VERY Centos/RHEL centric/dependant.
 # Its assumed you are running this on a bare/clean machine
@@ -18,15 +18,48 @@ try() {
 	fi
 }
 
+#Now that RHEL6 RPMs are released, lets try to be smart and pick RPMs based on that
+if [ -f /etc/redhat-release ]; then
+	elv=`cat /etc/redhat-release | gawk 'BEGIN {FS="release "} {print $2}' | gawk 'BEGIN {FS="."} {print $1}'`
+	#EnterpriseLinux Version String. Just a shortcut to be used later
+	els=el$elv
+else
+	#Bail
+	echo "Unable to determine version. I can't continue"
+	exit 1
+fi
+cd /tmp
+
+
+
 # Defaults for user provided input
-major="4.1.70"
-build="1518"
-latest_zenoss_build="$major-$build"
-default_arch="x86_64"
+arch="x86_64"
 # ftp mirror for MySQL to use for version auto-detection:
 mysql_ftp_mirror="ftp://mirror.anl.gov/pub/mysql/Downloads/MySQL-5.5/"
 
-cd /tmp
+# Auto-detect latest build:
+zenoss_base_url="http://downloads.sourceforge.net/project/zenoss/zenoss-beta"
+try wget -N $zenoss_base_url/builds/+
+build="$(cat +)"
+zenoss_base_url="$zenoss_base_url/builds/$build"
+
+zenoss_rpm_file="zenoss-$build.$els.$arch.rpm"
+zenpack_rpm_file="zenoss-core-zenpacks-$build.$els.$arch.rpm"
+
+# Let's grab Zenoss first...
+
+zenoss_gpg_key="http://dev.zenoss.org/yum/RPM-GPG-KEY-zenoss"
+for file in $zenoss_rpm_file $zenpack_rpm_file;do
+	if [ ! -f $file ];then
+		echo "Downloading Zenoss RPMs"
+		try wget -N $zenoss_base_url/$file
+	fi
+done
+
+if [ `rpm -qa gpg-pubkey* | grep -c "aa5a1ad7-4829c08a"` -eq 0  ];then
+	echo "Importing Zenoss GPG Key"
+	try rpm --import $zenoss_gpg_key
+fi
 
 echo "Auto-detecting most recent MySQL Community release"
 try rm -f .listing
@@ -40,24 +73,6 @@ if [ "${mysql_v:0:1}" != "5" ]; then
 	mysql_v="5.5.24"
 fi
 rm -f .listing
-
-echo "Attempting to Install Zenoss $latest_zenoss_build and components"
-
-#Define where to get stuff based on arch
-if [ "$1" = "" ];then
-	#Use the default arch, unless told otherwise
-	arch=$default_arch
-else
-	arch=$1
-fi
-
-#Allow for overriding
-if [ "$2" = "" ];then
-	#use the default unless instructed otherwise
-	zenoss_build=$latest_zenoss_build
-else
-	zenoss_build=$2
-fi
 
 echo "Ensuring This server is in a clean state before we start"
 mysql_installed=0
@@ -83,17 +98,6 @@ if [ `rpm -qa | grep -c -i zenoss` -gt 0 ]; then
 	exit 1
 fi
 
-#Now that RHEL6 RPMs are released, lets try to be smart and pick RPMs based on that
-if [ -f /etc/redhat-release ]; then
-	elv=`cat /etc/redhat-release | gawk 'BEGIN {FS="release "} {print $2}' | gawk 'BEGIN {FS="."} {print $1}'`
-	#EnterpriseLinux Version String. Just a shortcut to be used later
-	els=el$elv
-else
-	#Bail
-	echo "Unable to determine version. I can't continue"
-	exit 1
-fi
-
 # Where to get stuff. Base decisions on arch. Originally I was going to just
 # use the arch variable, but its a little dicey in that file names don't always
 # translate clearly. So just using if with a little duplication
@@ -106,16 +110,6 @@ if [ "$arch" = "x86_64" ]; then
 	#rpmforge_rpm_file="rpmforge-release-0.5.2-2.$els.rf.x86_64.rpm"
 	epel_rpm_file=epel-release-6-6.noarch.rpm
 	epel_rpm_url=http://download.fedoraproject.org/pub/epel/6/i386/$epel_rpm_file
-	
-elif [ "$arch" = "i386" ]; then
-	jre_file="jre-6u31-linux-i586-rpm.bin"
-	jre_url="http://javadl.sun.com/webapps/download/AutoDL?BundleId=59620"
-	mysql_client_rpm="MySQL-client-$mysql_v.linux2.6.i386.rpm"
-	mysql_server_rpm="MySQL-server-$mysql_v.linux2.6.i386.rpm"
-	mysql_shared_rpm="MySQL-shared-$mysql_v.linux2.6.i386.rpm"
-	#rpmforge_rpm_file="rpmforge-release-0.5.2-2.$els.rf.i386.rpm"
-	epel_rpm_file=epel-release-5-4.noarch.rpm
-	epel_rpm_url=http://dl.fedoraproject.org/pub/epel/5/i386/$epel_rpm_file
 else
 	echo "Don't know where to get files for arch $arch"
 	exit 1
@@ -170,23 +164,6 @@ if [ $mysql_installed -eq 0 ]; then
 			try rpm -ivh $file
 		fi
 	done
-fi
-
-zenoss_arch=$arch
-zenoss_rpm_file="zenoss-$zenoss_build.$els.$zenoss_arch.rpm"
-zenpack_rpm_file="zenoss-core-zenpacks-$zenoss_build.$els.$zenoss_arch.rpm"
-zenoss_base_url="http://downloads.sourceforge.net/project/zenoss/zenoss-alpha/$zenoss_build"
-zenoss_gpg_key="http://dev.zenoss.org/yum/RPM-GPG-KEY-zenoss"
-for file in $zenoss_rpm_file $zenpack_rpm_file;do
-	if [ ! -f $file ];then
-		echo "Downloading Zenoss RPMs"
-		try wget -N $zenoss_base_url/$file
-	fi
-done
-
-if [ `rpm -qa gpg-pubkey* | grep -c "aa5a1ad7-4829c08a"` -eq 0  ];then
-	echo "Importing Zenoss GPG Key"
-	try rpm --import $zenoss_gpg_key
 fi
 
 #echo "Installing Zenoss Dependency Repo"
