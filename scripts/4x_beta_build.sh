@@ -108,7 +108,7 @@ if [ "$arch" = "x86_64" ]; then
 	mysql_server_rpm="MySQL-server-$mysql_v.linux2.6.x86_64.rpm"
 	mysql_shared_rpm="MySQL-shared-$mysql_v.linux2.6.x86_64.rpm"
 	#rpmforge_rpm_file="rpmforge-release-0.5.2-2.$els.rf.x86_64.rpm"
-	epel_rpm_file=epel-release-6-6.noarch.rpm
+	epel_rpm_file=epel-release-6-7.noarch.rpm
 	epel_rpm_url=http://download.fedoraproject.org/pub/epel/6/i386/$epel_rpm_file
 else
 	echo "Don't know where to get files for arch $arch"
@@ -187,7 +187,7 @@ if [ "$elv" = "6" ]; then
 	echo "Installing rrdtool"
 	try yum -y install xorg-x11-fonts-Type1 ruby libdbi
 	try wget http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.$arch.rpm
-	try rpm -ivh rpmforge-release-0.5.2-2.el6.rf.$arch.rpm
+	try yum -y localinstall rpmforge-release-0.5.2-2.el6.rf.$arch.rpm
 	
 	try wget http://pkgs.repoforge.org/rrdtool/rrdtool-1.4.7-1.el6.rfx.$arch.rpm
 	try wget http://pkgs.repoforge.org/rrdtool/perl-rrdtool-1.4.7-1.el6.rfx.$arch.rpm
@@ -197,12 +197,12 @@ fi
 # TODO: el5 rrdtool install
 
 echo "Installing Zenoss"
-try rpm -ivh $zenoss_rpm_file
+try yum -y localinstall $zenoss_rpm_file
 
 try /sbin/service zenoss start
 
 echo "Installing Core ZenPacks"
-try rpm -ivh $zenpack_rpm_file
+try yum -y localinstall $zenpack_rpm_file
 
 echo "Please remember you can use the new zenpack --fetch command to install most zenpacks into your new core 4 Alpha install"
 
