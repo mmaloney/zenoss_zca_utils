@@ -39,9 +39,14 @@ mysql_ftp_mirror="ftp://mirror.anl.gov/pub/mysql/Downloads/MySQL-5.5/"
 
 # Auto-detect latest build:
 zenoss_base_url="http://downloads.sourceforge.net/project/zenoss/zenoss-beta"
-try wget -N $zenoss_base_url/builds/+
-build="$(cat +)"
-zenoss_base_url="$zenoss_base_url/builds/$build"
+if [ "$1" = "" ] || [ "$1" = "latest"]; then
+	#get latest build
+	try wget -N $zenoss_base_url/builds/+
+	build="$(cat +)"
+	zenoss_base_url="$zenoss_base_url/builds/$build"
+else
+	zenoss_base_url="$zenoss_base_url/builds/$1"
+fi
 
 zenoss_rpm_file="zenoss-$build.$els.$arch.rpm"
 zenpack_rpm_file="zenoss-core-zenpacks-$build.$els.$arch.rpm"
