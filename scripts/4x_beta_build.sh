@@ -1,7 +1,7 @@
 #!/bin/bash
 ####################################################
 #
-# A silly little script to make installing a 
+# A simple script to make installing a 
 # Zenoss Core 4.x beta development/testing machine
 # to save me a little time next time a new release is cut
 # VERY Centos/RHEL centric/dependant.
